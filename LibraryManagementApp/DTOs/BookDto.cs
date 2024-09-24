@@ -4,6 +4,8 @@ namespace LibraryManagementApp.DTOs
 {
     public class BookDto
     {
+        public int Id { get; set; }
+
         [Required]
         [MaxLength(150, ErrorMessage = "Book Name cannot exceed 150 characters")]
         [MinLength(2, ErrorMessage = "Book Name cannot below 2 characters")]

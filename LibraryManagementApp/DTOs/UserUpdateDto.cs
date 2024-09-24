@@ -2,18 +2,13 @@
 
 namespace LibraryManagementApp.DTOs
 {
-    public class UserDto
+    public class UserUpdateDto
     {
         public int Id { get; set; }
 
         [Required]
         [MaxLength(50, ErrorMessage = "Name cannot exceed 50 characters")]
         public string Name { get; set; }
-
-        [Required]
-        [EmailAddress]
-        [MaxLength(50, ErrorMessage = "Email cannot exceed 50 characters")]
-        public string Email { get; set; }
 
         [Required]
         [Phone]
@@ -25,8 +20,5 @@ namespace LibraryManagementApp.DTOs
         [MaxLength(100, ErrorMessage = "Address cannot exceed 100 characters")]
         public string Address { get; set; }
 
-        [Required]
-        [RegularExpression(@"^\d{16}$", ErrorMessage = "Aadhar number must be exactly 16 digits and numeric")]
-        public string AadharNo { get; set; }
     }
 }

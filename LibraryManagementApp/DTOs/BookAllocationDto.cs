@@ -4,11 +4,7 @@ namespace LibraryManagementApp.DTOs
 {
     public class BookAllocationDto
     {
-        [Required]
-        public DateOnly AllocationDate { get; set; }
-
-        [Required]
-        public DateOnly ReturnDate { get; set; }
+        public int Id { get; set; }
 
         [Required]
         public int UserId { get; set; }
@@ -16,4 +12,5 @@ namespace LibraryManagementApp.DTOs
         [Required]
         public int BookId { get; set; }
     }
+
 }
