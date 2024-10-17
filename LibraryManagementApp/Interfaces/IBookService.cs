@@ -1,4 +1,5 @@
 ﻿using LibraryManagementApp.DTOs;
+using LibraryManagementApp.Entities;
 
 namespace LibraryManagementApp.Interfaces
 {
@@ -10,7 +11,8 @@ namespace LibraryManagementApp.Interfaces
         Task<IEnumerable<BookDto>> GetAllBooksAsync();
         Task<BookDto> GetBookByIDAsync(int id);
         Task<IEnumerable<BookDto>> GetBooksByNameAsync(string bookNameContains);
-        Task<IEnumerable<BookDto>> GetBooksByGenerAsync(string gener);
+        Task<IEnumerable<BookDto>> GetBooksByGenreAsync(string genre);
         Task<IEnumerable<BookDto>> GetBooksByAuthorIDAsync(int id);
+        Task<GetBookIncludingAuthorDetailDto> GetBookByIdIncludingAuthorAsync(int id);
     }
 }

@@ -10,27 +10,44 @@ namespace LibraryManagementApp.Controllers
     public class UserManagementController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IBookService _bookService;
+        private readonly IBookAllocationService _bookAllocationService;
         private readonly ILogger<UserManagementController> _logger;
 
-        public UserManagementController(IUserService userService, ILogger<UserManagementController> logger)
+        public UserManagementController(IUserService userService, IBookService bookService, IBookAllocationService bookAllocationService, ILogger<UserManagementController> logger)
         {
             _userService = userService;
+            _bookService = bookService;
+            _bookAllocationService = bookAllocationService;
             _logger = logger;
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAllUsersAsync()
         {
-            var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
+            try
+            {
+                var users = await _userService.GetAllUsersAsync();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Internal server error occured while getting all the users {ex}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
             {
-                var user = await _userService.GetUserByIDAsnyc(id);
+                var user = await _userService.GetUserByIDAsync(id);
                 if (user == null)
                 {
                     return NotFound();
@@ -39,17 +56,42 @@ namespace LibraryManagementApp.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Internal server error occured while getting user by id {ex}");
+                _logger.LogError($"Internal server error occured while getting user by id {id}: {ex}");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+        [HttpGet("books/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUserByIdIncludingAllocatedBooks(int id)
+        {
+            try
+            {
+                var user = await _userService.GetUserByIdIncludingBooksAllocatedAsync(id);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Internal server error occured while getting user by id {id} including books: {ex}");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }
 
         [HttpGet("Email/{email:required}")]
-        public async Task<IActionResult> GetUserByEmail(string email)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUserByEmailAsync(string email)
         {
             try
             {
-                var user = await _userService.GetUserByEmailAsnyc(email);
+                var user = await _userService.GetUserByEmailAsync(email);
                 if (user == null)
                 {
                     return NotFound();
@@ -58,13 +100,16 @@ namespace LibraryManagementApp.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Internal server error occured while getting user by email {ex}");
+                _logger.LogError($"Internal server error occured while getting user by email {email}: {ex}");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateUser(UserDto userDto)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> CreateUserAsync(UserDto userDto)
         {
             try
             {
@@ -102,7 +147,11 @@ namespace LibraryManagementApp.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateUser(UserUpdateDto userUpdateDto)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateUserAsync(UserUpdateDto userUpdateDto)
         {
             try
             {
@@ -111,7 +160,7 @@ namespace LibraryManagementApp.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var user = await _userService.GetUserByIDAsnyc(userUpdateDto.Id);
+                var user = await _userService.GetUserByIDAsync(userUpdateDto.Id);
                 if (user == null)
                 {
                     return NotFound();
@@ -139,46 +188,68 @@ namespace LibraryManagementApp.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Internal server error occured while updating the user {ex}");
+                _logger.LogError($"Internal server error occured while updating the user with id {userUpdateDto.Id}: {ex}");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
 
         }
 
-        [HttpGet("BookAllocation")]
-        public async Task<IActionResult> AllocateBookToUser(BookAllocationDto bookAllocationDto)
+        [HttpPost("BookAllocation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> AllocateBookToUserAsync(BookAllocationDto bookAllocationDto)
         {
             try
             {
-                var user = await _userService.GetUserByEmailAsnyc(email);
+                var user = await _userService.GetUserByIDAsync(bookAllocationDto.UserId);
                 if (user == null)
                 {
                     return NotFound();
                 }
-                return Ok(user);
+
+                var book = await _bookService.GetBookByIDAsync(bookAllocationDto.BookId);
+                if (book == null)
+                {
+                    return NotFound();
+                }
+                var allocationDetails = await _bookAllocationService.AllocateBookAsync(bookAllocationDto);
+
+                return Ok(allocationDetails);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Internal server error occured while getting user by email {ex}");
+                _logger.LogError($"Internal server error occured while getting allocating book to a user {ex}");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }
 
-        [HttpGet("BookDeallocation")]
-        public async Task<IActionResult> DeallocateBookToUser(BookAllocationDto bookAllocationDto)
+        [HttpPost("BookDeallocation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeallocateBookToUserAsync(BookAllocationDto bookAllocationDto)
         {
             try
             {
-                var user = await _userService.GetUserByEmailAsnyc(email);
+                var user = await _userService.GetUserByIDAsync(bookAllocationDto.UserId);
                 if (user == null)
                 {
                     return NotFound();
                 }
-                return Ok(user);
+
+                var book = await _bookService.GetBookByIDAsync(bookAllocationDto.BookId);
+                if (book == null)
+                {
+                    return NotFound();
+                }
+                await _bookAllocationService.DeallocateBookAsync(bookAllocationDto);
+
+                return Ok("Book deallocated successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Internal server error occured while getting user by email {ex}");
+                _logger.LogError($"Internal server error occured while getting deallocating book from a user {ex}");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }

@@ -6,6 +6,10 @@ namespace LibraryManagementApp.DTOs
     {
         public int Id { get; set; }
 
+        public DateTime AllocationDate { get; set; }
+
+        public DateTime ReturnDate { get; set; }
+
         [Required]
         public int UserId { get; set; }
 

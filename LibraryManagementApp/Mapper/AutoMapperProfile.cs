@@ -8,14 +8,19 @@ namespace LibraryManagementApp.Mapper
     {
         public AutoMapperProfile()
         {
-            CreateMap<Author, AuthorDto>();
-            CreateMap<AuthorDto, Author>();
+            CreateMap<Author, AuthorDto>().ReverseMap();
 
-            CreateMap<Book, BookDto>();
-            CreateMap<BookDto, Book>();
+            CreateMap<Author, GetAuthorIncludingBooksDto>();
 
-            CreateMap<User, UserDto>();
-            CreateMap<UserDto, User>();
+            CreateMap<Book, GetBookIncludingAuthorDetailDto>();
+
+            CreateMap<Book, BookDto>().ReverseMap();
+
+            CreateMap<User, UserDto>().ReverseMap();
+
+            CreateMap<BookAllocation, BookAllocationDto>().ReverseMap();
+
+            CreateMap<User, GetUserIncludingBooksAllocatedDto>();
         }
     }
 }
