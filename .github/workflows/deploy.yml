@@ -24,7 +24,7 @@ jobs:
     - name: Build the project
       run: dotnet publish -c Release -o ./publish
 
-- name: Copy files to Windows VM using SCP
+    - name: Copy files to Windows VM using SCP
       shell: pwsh
       run: |
         $sourcePath = "./publish/*"
