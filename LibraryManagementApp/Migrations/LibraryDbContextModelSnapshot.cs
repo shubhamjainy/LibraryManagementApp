@@ -22,7 +22,7 @@ namespace LibraryManagementApp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("LibraryManagementApp.Models.Author", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.Author", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,7 +44,7 @@ namespace LibraryManagementApp.Migrations
                     b.ToTable("Authors");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.Book", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.Book", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,7 +55,7 @@ namespace LibraryManagementApp.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Desciption")
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -76,7 +76,7 @@ namespace LibraryManagementApp.Migrations
                     b.ToTable("Books");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.BookAllocation", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.BookAllocation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -84,14 +84,14 @@ namespace LibraryManagementApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateOnly>("AllocationDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("AllocationDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("BookId")
                         .HasColumnType("int");
 
-                    b.Property<DateOnly>("ReturnDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("ReturnDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -105,7 +105,7 @@ namespace LibraryManagementApp.Migrations
                     b.ToTable("BookAllocations");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.User", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -152,9 +152,9 @@ namespace LibraryManagementApp.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.Book", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.Book", b =>
                 {
-                    b.HasOne("LibraryManagementApp.Models.Author", "Author")
+                    b.HasOne("LibraryManagementApp.Entities.Author", "Author")
                         .WithMany("Books")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -163,15 +163,15 @@ namespace LibraryManagementApp.Migrations
                     b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.BookAllocation", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.BookAllocation", b =>
                 {
-                    b.HasOne("LibraryManagementApp.Models.Book", "Book")
+                    b.HasOne("LibraryManagementApp.Entities.Book", "Book")
                         .WithMany("BookAllocations")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LibraryManagementApp.Models.User", "User")
+                    b.HasOne("LibraryManagementApp.Entities.User", "User")
                         .WithMany("BooksAllocated")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -182,17 +182,17 @@ namespace LibraryManagementApp.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.Author", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.Author", b =>
                 {
                     b.Navigation("Books");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.Book", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.Book", b =>
                 {
                     b.Navigation("BookAllocations");
                 });
 
-            modelBuilder.Entity("LibraryManagementApp.Models.User", b =>
+            modelBuilder.Entity("LibraryManagementApp.Entities.User", b =>
                 {
                     b.Navigation("BooksAllocated");
                 });

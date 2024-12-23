@@ -1,0 +1,44 @@
+name: Deploy to Windows VM
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build the project
+      run: dotnet publish -c Release -o ./publish
+
+    - name: Copy files to Windows VM
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.AZURE_VM_IP }}
+        username: ${{ secrets.AZURE_VM_USER }}
+        key: ${{ secrets.AZURE_VM_PRIVATE_KEY }}
+        source: ./publish/
+        target: C:/inetpub/wwwroot/LibraryApp
+
+    - name: Restart IIS
+      uses: appleboy/ssh-action@v0.1.9
+      with:
+        host: ${{ secrets.AZURE_VM_IP }}
+        username: ${{ secrets.AZURE_VM_USER }}
+        key: ${{ secrets.AZURE_VM_PRIVATE_KEY }}
+        script: |
+          # Restart IIS to apply changes
+          iisreset
