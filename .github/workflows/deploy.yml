@@ -10,49 +10,74 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # Checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0
+      # Set up .NET 8 environment
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0
 
-    - name: Restore dependencies
-      run: dotnet restore
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build the project
-      run: dotnet publish -c Release -o ./publish
+      # Build and publish the project
+      - name: Build the project
+        run: dotnet publish -c Release -o ./publish
 
-    - name: Write SSH Key to File
-      shell: pwsh
-      run: |
-        $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
-        Set-Content -Path $privateKeyPath -Value "${{ secrets.AZURE_VM_PRIVATE_KEY }}" -NoNewline
+      # Write SSH private key to file for use with SSH connections
+      - name: Write SSH Key to File
+        shell: pwsh
+        run: |
+          $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
+          Set-Content -Path $privateKeyPath -Value "${{ secrets.AZURE_VM_PRIVATE_KEY }}" -NoNewline
+          Write-Host "SSH key written to file."
 
-    - name: Copy files to Windows VM using SCP
-      shell: pwsh
-      run: |
-        $sourcePath = "./publish/*"
-        $destinationPath = "C:/inetpub/wwwroot/LibraryApp"
-        $vmHost = "${{ secrets.AZURE_VM_IP }}"
-        $vmUsername = "${{ secrets.AZURE_VM_USER }}"
-        $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
-        $port = 22
+      # Copy files to Windows VM using PowerShell (SCP replaced with PowerShell Copy-Item)
+      - name: Copy files to Windows VM using PowerShell
+        shell: pwsh
+        run: |
+          $sourcePath = "./publish/*"
+          $destinationPath = "C:/inetpub/wwwroot/LibraryApp"
+          $vmHost = "${{ secrets.AZURE_VM_IP }}"
+          $vmUsername = "${{ secrets.AZURE_VM_USER }}"
+          $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
+          $port = 22
 
-        # Create an SSH session
-        $session = New-PSSession -HostName $vmHost -UserName $vmUsername -KeyFile $privateKeyPath -Port $port
+          # Create an SSH session
+          try {
+            Write-Host "Creating SSH session to $vmHost"
+            $session = New-PSSession -HostName $vmHost -UserName $vmUsername -KeyFile $privateKeyPath -Port $port
+            Write-Host "SSH session established successfully."
 
-        # Copy files using SCP
-        Copy-Item -ToSession $session -Path $sourcePath -Destination $destinationPath -Recurse
+            # Copy files using SCP
+            Write-Host "Copying files to $destinationPath"
+            Copy-Item -ToSession $session -Path $sourcePath -Destination $destinationPath -Recurse
+            Write-Host "Files copied successfully."
 
-    - name: Restart IIS
-      shell: pwsh
-      run: |
-        $vmHost = "${{ secrets.AZURE_VM_IP }}"
-        $vmUsername = "${{ secrets.AZURE_VM_USER }}"
-        $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
-        $port = 22
+          } catch {
+            Write-Error "Error during SSH session or file copy: $_"
+            exit 1
+          }
 
-        # Restart IIS using SSH
-        ssh -i $privateKeyPath -p $port $vmUsername@$vmHost "iisreset"
+      # Restart IIS on Windows VM to apply the new deployment
+      - name: Restart IIS
+        shell: pwsh
+        run: |
+          $vmHost = "${{ secrets.AZURE_VM_IP }}"
+          $vmUsername = "${{ secrets.AZURE_VM_USER }}"
+          $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
+          $port = 22
+
+          try {
+            Write-Host "Restarting IIS on $vmHost"
+            ssh -i $privateKeyPath -p $port $vmUsername@$vmHost "iisreset"
+            Write-Host "IIS restarted successfully."
+
+          } catch {
+            Write-Error "Error restarting IIS: $_"
+            exit 1
+          }
