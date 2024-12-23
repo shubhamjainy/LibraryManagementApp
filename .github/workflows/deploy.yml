@@ -29,13 +29,13 @@ jobs:
       run: |
         $sourcePath = "./publish/*"
         $destinationPath = "C:/inetpub/wwwroot/LibraryApp"
-        $host = "${{ secrets.AZURE_VM_IP }}"
-        $username = "${{ secrets.AZURE_VM_USER }}"
-        $privateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
+        $vmHost = "${{ secrets.AZURE_VM_IP }}"
+        $vmUsername = "${{ secrets.AZURE_VM_USER }}"
+        $vmPrivateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
         $port = 22
 
         # Create an SSH session
-        $session = New-PSSession -HostName $host -UserName $username -KeyFile $privateKey -Port $port
+        $session = New-PSSession -HostName $vmHost -UserName $vmUsername -KeyFile $vmPrivateKey -Port $port
 
         # Copy files using SCP
         Copy-Item -ToSession $session -Path $sourcePath -Destination $destinationPath -Recurse
@@ -43,10 +43,10 @@ jobs:
     - name: Restart IIS
       shell: pwsh
       run: |
-        $host = "${{ secrets.AZURE_VM_IP }}"
-        $username = "${{ secrets.AZURE_VM_USER }}"
-        $privateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
+        $vmHost = "${{ secrets.AZURE_VM_IP }}"
+        $vmUsername = "${{ secrets.AZURE_VM_USER }}"
+        $vmPrivateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
         $port = 22
 
         # Restart IIS using SSH
-        ssh -i $privateKey -p $port $username@$host "iisreset"
+        ssh -i $vmPrivateKey -p $port $vmUsername@$vmHost "iisreset"
