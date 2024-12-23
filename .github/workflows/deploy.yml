@@ -24,6 +24,12 @@ jobs:
     - name: Build the project
       run: dotnet publish -c Release -o ./publish
 
+    - name: Write SSH Key to File
+      shell: pwsh
+      run: |
+        $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
+        Set-Content -Path $privateKeyPath -Value "${{ secrets.AZURE_VM_PRIVATE_KEY }}" -NoNewline
+
     - name: Copy files to Windows VM using SCP
       shell: pwsh
       run: |
@@ -31,11 +37,11 @@ jobs:
         $destinationPath = "C:/inetpub/wwwroot/LibraryApp"
         $vmHost = "${{ secrets.AZURE_VM_IP }}"
         $vmUsername = "${{ secrets.AZURE_VM_USER }}"
-        $vmPrivateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
+        $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
         $port = 22
 
         # Create an SSH session
-        $session = New-PSSession -HostName $vmHost -UserName $vmUsername -KeyFile $vmPrivateKey -Port $port
+        $session = New-PSSession -HostName $vmHost -UserName $vmUsername -KeyFile $privateKeyPath -Port $port
 
         # Copy files using SCP
         Copy-Item -ToSession $session -Path $sourcePath -Destination $destinationPath -Recurse
@@ -45,8 +51,8 @@ jobs:
       run: |
         $vmHost = "${{ secrets.AZURE_VM_IP }}"
         $vmUsername = "${{ secrets.AZURE_VM_USER }}"
-        $vmPrivateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
+        $privateKeyPath = "$env:GITHUB_WORKSPACE\id_rsa"
         $port = 22
 
         # Restart IIS using SSH
-        ssh -i $vmPrivateKey -p $port $vmUsername@$vmHost "iisreset"
+        ssh -i $privateKeyPath -p $port $vmUsername@$vmHost "iisreset"
