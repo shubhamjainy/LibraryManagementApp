@@ -24,21 +24,29 @@ jobs:
     - name: Build the project
       run: dotnet publish -c Release -o ./publish
 
-    - name: Copy files to Windows VM
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.AZURE_VM_IP }}
-        username: ${{ secrets.AZURE_VM_USER }}
-        key: ${{ secrets.AZURE_VM_PRIVATE_KEY }}
-        source: ./publish/
-        target: C:/inetpub/wwwroot/LibraryApp
+- name: Copy files to Windows VM using SCP
+      shell: pwsh
+      run: |
+        $sourcePath = "./publish/*"
+        $destinationPath = "C:/inetpub/wwwroot/LibraryApp"
+        $host = "${{ secrets.AZURE_VM_IP }}"
+        $username = "${{ secrets.AZURE_VM_USER }}"
+        $privateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
+        $port = 22
+
+        # Create an SSH session
+        $session = New-PSSession -HostName $host -UserName $username -KeyFile $privateKey -Port $port
+
+        # Copy files using SCP
+        Copy-Item -ToSession $session -Path $sourcePath -Destination $destinationPath -Recurse
 
     - name: Restart IIS
-      uses: appleboy/ssh-action@v0.1.9
-      with:
-        host: ${{ secrets.AZURE_VM_IP }}
-        username: ${{ secrets.AZURE_VM_USER }}
-        key: ${{ secrets.AZURE_VM_PRIVATE_KEY }}
-        script: |
-          # Restart IIS to apply changes
-          iisreset
+      shell: pwsh
+      run: |
+        $host = "${{ secrets.AZURE_VM_IP }}"
+        $username = "${{ secrets.AZURE_VM_USER }}"
+        $privateKey = "${{ secrets.AZURE_VM_PRIVATE_KEY }}"
+        $port = 22
+
+        # Restart IIS using SSH
+        ssh -i $privateKey -p $port $username@$host "iisreset"
